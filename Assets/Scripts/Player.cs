@@ -1,9 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+#region 数据
     /// <summary>
     /// 玩家手牌
     /// </summary>
@@ -25,9 +27,14 @@ public class Player : MonoBehaviour
     private float bet;
 
     /// <summary>
-    /// 玩家是否弃牌
+    /// 上家的下注
     /// </summary>
-    private bool fold;
+    private float upper_bet;
+
+    /// <summary>
+    /// 玩家状态, 0-4:弃牌、过牌、跟注、加注、AllIn
+    /// </summary>
+    private uint stat;
 
     /// <summary>
     /// 玩家是否全下
@@ -47,32 +54,46 @@ public class Player : MonoBehaviour
 
     public float Bet { get => bet; set => bet = value; }
 
-    public bool Fold { get => fold; set => fold = value; }
+    public uint Stat { get => stat; set => stat = value; }
 
     public bool Allin { get => allin; set => allin = value; }
 
     public bool Check { get => check; set => check = value; }
 
+#endregion
+
+#region 事件
+    public EventHandler<float> OnBet;
+    public EventHandler<uint> OnChangeStat;
+#endregion
+
+#region API
     /// <summary>
-    /// 0-3代表下注、弃牌、全下、过牌
+    /// 0-3代表下注、弃牌、过牌、全压
     /// </summary>
     /// <param name="action"></param>
     public void Decide(uint action)
     {
-        // 玩家决定下注、弃牌、全下、过牌等操作
+        // 玩家决定下注、弃牌、过牌
         switch (action)
         {
             case 0:
-                // 下注
+                // 下注/跟注/加注
+                //Player_Bet();
                 break;
             case 1:
                 // 弃牌
+                Player_Fold();
                 break;
             case 2:
-                // 全下
+                // 过牌
+                Player_Check();
                 break;
             case 3:
-                // 过牌
+                // 全压
+                Player_Allin();
+                break;
+            default:
                 break;
         }
     }
@@ -86,23 +107,66 @@ public class Player : MonoBehaviour
         // 最好的牌型中的最大牌的点数
     }
 
-    private void Player_Bet(float bet)
+    public void Player_Bet(float bet)
     {
         // 玩家下注
+        if(money > bet){
+            //满足下注的条件：跟、加
+            if(upper_bet == 0){
+                //成为第一个下注的人
+                DoBet(bet);
+            }else{
+                //上家下过注，可以跟、加
+                if(bet == upper_bet){
+                    //跟上家
+                    DoBet(bet);
+
+                    Stat = 2;
+                    OnChangeStat?.Invoke(this, Stat);
+                }else if(bet >= upper_bet * 2){
+                    //加注
+                    DoBet(bet);
+
+                    Stat = 3;
+                    OnChangeStat?.Invoke(this, Stat);
+                }else{
+                    Debug.LogError("下注不能小于上家的下注, 加注不得少于上家的两倍");
+                }
+            }
+
+        }
+        else if(money == bet){
+            Debug.Log("是否要AllIn");
+        }
+        else{
+            Debug.LogError("超出本金");
+        }
+    }
+
+    private void DoBet(float bet){
+        Money -= bet;
+        Bet += bet;
+        OnBet?.Invoke(this, Bet);
     }
 
     private void Player_Fold()
     {
         // 玩家弃牌
-    }
-
-    private void Player_Allin()
-    {
-        // 玩家全下
+        Stat = 0;
+        OnChangeStat?.Invoke(this, Stat);
     }
 
     private void Player_Check()
     {
         // 玩家过牌
+        Stat = 1;
+        OnChangeStat?.Invoke(this, Stat);
     }
+
+    private void Player_Allin(){
+        DoBet(bet);
+        Stat = 4;
+        OnChangeStat?.Invoke(this, Stat);
+    }
+#endregion
 }
