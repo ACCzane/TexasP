@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class Card : MonoBehaviour
 {
+#region 静态
     /// <summary>
     /// 从0-51编号的卡牌数据为：
     /// 0-12: 黑桃A-K
@@ -36,17 +38,23 @@ public class Card : MonoBehaviour
         cards[index].Used = true;
         return cards[index];
     }
+#endregion
+   
+    private CardData cardData;
+    public CardData CardData { get { return cardData; } set { cardData = value; } }
 
-    // Start is called before the first frame update
-    void Start()
+    public Card()
     {
-
+        cardData = GetRandomCard();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    public Sprite FindSprite(){
+
+        /// 这里需要根据cardData.CardType和cardData.CardNum找到对应的sprite在Sprites文件夹中的index，进而找到对应的sprite
+        uint index = 0;
+        index = CardData.CardType * 13 + CardData.CardNum - 1;
+
+        return CardFileLoader.LoadFile(index);
     }
 }
 
@@ -71,5 +79,32 @@ public class CardData{
         this.cardType = cardType;
         this.cardNum = cardNum;
         this.used = false;
+    }
+}
+
+public static class CardFactory
+{
+    public static Card CreateCard()
+    {
+        Card card = new Card();
+        
+        return card;
+    }
+}
+
+public static class CardFileLoader{
+    private static string path = "Assets/PlayingCards/Textures/Sprites";
+
+    /// <summary>
+    /// 根据索引获得卡牌的Sprite
+    /// </summary>
+    /// <param name="index">0-51为正常卡牌，52-53为大小王，54-58为牌背，59为空白</param>
+    public static Sprite LoadFile(uint index){
+        string fullpath = path + "/card_list_2d_" + index + ".asset";
+        Debug.Log(fullpath);
+        //Sprite sprite = Resources.Load<Sprite>(fullpath);
+        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullpath);
+        Debug.Log(sprite);
+        return sprite;
     }
 }

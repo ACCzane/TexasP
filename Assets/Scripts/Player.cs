@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Microsoft.Unity.VisualStudio.Editor;
+using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -63,6 +66,7 @@ public class Player : MonoBehaviour
 #endregion
 
 #region 事件
+    public EventHandler<float> OnChangeTotalMoney;
     public EventHandler<float> OnBet;
     public EventHandler<uint> OnChangeStat;
 #endregion
@@ -72,14 +76,14 @@ public class Player : MonoBehaviour
     /// 0-3代表下注、弃牌、过牌、全压
     /// </summary>
     /// <param name="action"></param>
-    public void Decide(uint action)
+    public void Decide(uint action, float bet)
     {
         // 玩家决定下注、弃牌、过牌
         switch (action)
         {
             case 0:
                 // 下注/跟注/加注
-                //Player_Bet();
+                Player_Bet(bet);
                 break;
             case 1:
                 // 弃牌
@@ -147,6 +151,7 @@ public class Player : MonoBehaviour
         Money -= bet;
         Bet += bet;
         OnBet?.Invoke(this, Bet);
+        OnChangeTotalMoney?.Invoke(this, Money);
     }
 
     private void Player_Fold()
@@ -168,5 +173,12 @@ public class Player : MonoBehaviour
         Stat = 4;
         OnChangeStat?.Invoke(this, Stat);
     }
-#endregion
+
+    public void Addcard(Card card1, Card card2){
+        // 玩家摸牌
+        cards[0] = card1;
+        cards[1] = card2;
+    }
+    #endregion
 }
+

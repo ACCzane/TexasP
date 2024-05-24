@@ -14,11 +14,21 @@ public class PlayerVisual : MonoBehaviour
     [SerializeField]private TextMeshProUGUI bet;
     [SerializeField]private TextMeshProUGUI stat;
 
+
+    [SerializeField]private GameObject card1;
+    [SerializeField]private GameObject card2;
+
+
     [SerializeField]private Player player;
 
     private void Start() {
+        player.OnChangeTotalMoney += UpdateTotalMoney;
         player.OnBet += UpdateBet;
         player.OnChangeStat += UpdateStat;
+    }
+
+    private void UpdateTotalMoney(object sender, float e){
+        money.text = e.ToString() + " $";
     }
 
     private void UpdateBet(object sender, float e)
@@ -48,5 +58,15 @@ public class PlayerVisual : MonoBehaviour
                 stat.text = "Unknown";
                 break;
         }
+    }
+
+    private void UpdateCardsSprite(){
+        card1.GetComponent<Image>().sprite = player.Cards[0].FindSprite();
+        card2.GetComponent<Image>().sprite = player.Cards[1].FindSprite();
+    }
+
+    private void HideCards(){
+        card1.GetComponent<Image>().sprite = CardFileLoader.LoadFile(54);
+        card2.GetComponent<Image>().sprite = CardFileLoader.LoadFile(54);
     }
 }
