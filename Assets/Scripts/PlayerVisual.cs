@@ -25,15 +25,28 @@ public class PlayerVisual : MonoBehaviour
         player.OnChangeTotalMoney += UpdateTotalMoney;
         player.OnBet += UpdateBet;
         player.OnChangeStat += UpdateStat;
+        player.OnUpdateCards += UpdateCardsSprite;
+    }
+
+    private void UpdateCardsSprite(object sender, uint e)
+    {
+        if(e == 1){
+            UpdateCardsSprite();
+        }else if(e == 0){
+            HideCards();
+        }else if(e == 2){
+            card1.GetComponent<Image>().sprite = null;
+            card2.GetComponent<Image>().sprite = null;
+        }
     }
 
     private void UpdateTotalMoney(object sender, float e){
-        money.text = e.ToString() + " $";
+        money.text = e.ToString("F1") + " $";
     }
 
     private void UpdateBet(object sender, float e)
     {
-        bet.text = e.ToString() + " $";
+        bet.text = e.ToString("F1") + " $";
     }
 
     private void UpdateStat(object sender, uint e)

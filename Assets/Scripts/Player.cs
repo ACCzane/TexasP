@@ -69,6 +69,11 @@ public class Player : MonoBehaviour
     public EventHandler<float> OnChangeTotalMoney;
     public EventHandler<float> OnBet;
     public EventHandler<uint> OnChangeStat;
+
+    /// <summary>
+    /// 玩家手牌更新事件, uint值为0表示牌背、1表示牌面、2表示没牌
+    /// </summary>
+    public EventHandler<uint> OnUpdateCards;
 #endregion
 
 #region API
@@ -178,7 +183,92 @@ public class Player : MonoBehaviour
         // 玩家摸牌
         cards[0] = card1;
         cards[1] = card2;
+        OnUpdateCards?.Invoke(this, 1);
     }
     #endregion
 }
 
+/// <summary>
+/// 双向环状链表的结点
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class Node<T>{
+    private T item;
+    private Node<T> next;
+    private Node<T> prev;
+    public T Item { get => item; set => item = value; }
+    public Node<T> Next { get => next; set => next = value; }
+    public Node<T> Prev { get => prev; set => prev = value; }
+    public Node(T item){
+        Item = item;
+        Next = null;
+        Prev = null;
+    }
+    public Node(T item, Node<T> next){
+        Item = item;
+        Next = next;
+    }
+    public Node(T item, Node<T> prev, Node<T> next){
+        Item = item;
+        Prev = prev;
+        Next = next;
+    }
+}
+
+/// <summary>
+/// 双向环状链表，可以Add、Delete
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class LinkList<T>{
+    private Node<T> firstNode;
+    private Node<T> lastNode;
+    private bool isEmpty;
+    public Node<T> FirstNode { get => firstNode; set => firstNode = value; }
+    public Node<T> LastNode { get => lastNode; set => lastNode = value; }
+    public bool IsEmpty { get => isEmpty;}
+
+    public void Add(T item){
+        if(FirstNode == null){
+            Node<T> node3 = new Node<T>(item);
+            FirstNode = node3;
+            LastNode = FirstNode;
+            FirstNode.Prev = FirstNode;
+            FirstNode.Next = FirstNode;
+            return;
+        }
+        Node<T> node = FirstNode;
+        while(node != LastNode){
+            //node.Next.Prev = node;
+            node = node.Next;
+        }
+        Node<T> node2 = new Node<T>(item, FirstNode);
+        LastNode = node2;
+        node.Next = node2;
+        node2.Prev = node;
+
+        node2.Next = FirstNode;
+        FirstNode.Prev = node2;
+    }
+    public bool Delete(T item){
+        if(FirstNode == null){
+            Debug.LogError("LinkList is empty");
+            return false;
+        }
+        Node<T> node = FirstNode;
+        if(node.Item.Equals(item)){
+            FirstNode = null;
+            LastNode = null;
+            return true;
+        }
+        node = node.Next;
+        while(node != FirstNode){
+            if(node.Item.Equals(item)){
+                node.Prev.Next = node.Next;
+                node.Next.Prev = node.Prev;
+                return true;
+            }
+            node = node.Next;
+        }
+        return false;
+    }
+}

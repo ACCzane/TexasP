@@ -2,35 +2,33 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Dealer : MonoBehaviour
+public class Dealer
 {
-    private string playerPath = "/PlayerCanvas/Players";    //场景中Player的路径
-    private Player[] players;
+    private LinkList<Player> players;
 
     /// <summary>
-    /// 游戏开始时初始化玩家信息
+    /// 当前轮次的总金额
     /// </summary>
-    private void GameStart() {
-        GameObject playersParent = GameObject.Find(playerPath);
+    private float currentRoundTotalMoney;
+    /// <summary>
+    /// 底池
+    /// </summary>
+    private float totalMoney;
 
-        if(playersParent != null){
-            int playerNum = playersParent.transform.childCount;
-            players = new Player[playerNum];
-            for(int i = 0; i < playerNum; i++){
-                GameObject playerObj = playersParent.transform.GetChild(i).gameObject;
-                players[i] = playerObj.GetComponent<Player>();
-            }
-        }
+    public Dealer(LinkList<Player> players) {
+        this.players = players;
     }
 
     /// <summary>
     /// 游戏最开始所有玩家获得的本金
     /// </summary>
     /// <param name="money">本金</param>
-    private void SendMoneyToEveryPlayer(int money) {
+    public void SendMoneyToEveryPlayer(int money) {
         if(players != null){
-            foreach(Player player in players){
-                SendMoneyToPlayer(player, money);
+            Node<Player> current = players.FirstNode;
+            while(current != null){
+                SendMoneyToPlayer(current.Item, money);
+                current = current.Next;
             }
         }
     }
@@ -47,10 +45,12 @@ public class Dealer : MonoBehaviour
     /// <summary>
     /// 游戏开始时发牌给所有玩家
     /// </summary>
-    private void SendCardToEveryPlayer(){
+    public void SendCardToEveryPlayer(){
         if(players != null){
-            foreach(Player player in players){
-                SendCardToPlayer(player);
+            Node<Player> current = players.FirstNode;
+            while(current != null){
+                SendCardToPlayer(current.Item);
+                current = current.Next;
             }
         }
     }
@@ -65,4 +65,25 @@ public class Dealer : MonoBehaviour
         player.Addcard(card1, card2);       
     }
     
+    /// <summary>
+    /// 回合结束时，从所有玩家那里取钱放进底池
+    /// </summary>
+    public void TakeMoneyFromAllPlayers(){
+        if(players != null){
+            Node<Player> current = players.FirstNode;
+            while(current != null){
+                TakeMoneyFromPlayer(current.Item);
+                current = current.Next;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 将玩家所下的金额放进底池
+    /// </summary>
+    /// <param name="player"></param>
+    private void TakeMoneyFromPlayer(Player player){
+        currentRoundTotalMoney += player.Bet;
+        player.Bet = 0;
+    }
 }
