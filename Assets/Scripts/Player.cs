@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Unity.VisualStudio.Editor;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -259,6 +260,18 @@ public class Player : MonoBehaviour
         OnChangeTotalMoney?.Invoke(this, Money);
         //OnChangeTotalMoney?.Invoke(this, 0);
         //OnChangeStat?.Invoke(this, 0);
+    }
+
+    public void CountHandValue(List<Card> publicCards){
+        //cards保存7张牌，包括2张手牌和5张公共牌
+        List<Card> cards = new List<Card>();
+        for(int i = 0; i < 2; i++){
+            cards.Add(this.cards[i]);
+        }
+        cards.AddRange(publicCards);
+        //Card类的运算符已重载，可以排序
+        cards.Sort();
+        
     }
 #endregion
 }

@@ -57,6 +57,44 @@ public class Card
         cardData = GetRandomCard();
     }
 
+    #region 重载运算符
+    public static bool operator <(Card card1, Card card2){
+        if(card1.CardData.CardNum < card2.CardData.CardNum){
+            if(card1.CardData.CardNum == 1){
+                //A是最大的
+                return false;
+            }
+            return true;
+        }
+        if(card1.CardData.CardNum > card2.CardData.CardNum){
+            if(card2.CardData.CardNum == 1){
+                //A是最大的
+                return true;
+            }
+            return false;
+        }
+        return card1.CardData.CardType < card2.CardData.CardType;
+    }
+
+    public static bool operator >(Card card1, Card card2){
+        if(card1.CardData.CardNum < card2.CardData.CardNum){
+            if(card1.CardData.CardNum == 1){
+                //A是最大的
+                return true;
+            }
+            return false;
+        }
+        if(card1.CardData.CardNum > card2.CardData.CardNum){
+            if(card2.CardData.CardNum == 1){
+                //A是最大的
+                return false;
+            }
+            return true;
+        }
+        return card1.CardData.CardType > card2.CardData.CardType;      
+    }
+    #endregion
+   
     public Sprite FindSprite(){
 
         /// 这里需要根据cardData.CardType和cardData.CardNum找到对应的sprite在Sprites文件夹中的index，进而找到对应的sprite
@@ -77,9 +115,12 @@ public class CardData{
     /// </summary>
     private uint cardNum;
     /// <summary>
-    /// 0:unused, 1:used
+    /// 0-3:Club, Diamond, Heart, Spade
     /// </summary>
     public uint CardType { get { return cardType; } }
+    /// <summary>
+    /// 1-13: A-K
+    /// </summary>
     public uint CardNum { get { return cardNum; } }
     public CardData(uint cardType, uint cardNum)
     {
@@ -110,5 +151,256 @@ public static class CardFileLoader{
         //Sprite sprite = Resources.Load<Sprite>(fullpath);
         Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullpath);
         return sprite;
+    }
+}
+
+public class CardCombinationHelper{
+    public enum CombinationType{
+        //高牌
+        HighCard,
+        //一对
+            OnePair,
+        //两对    
+            TwoPair,
+        //三条
+            ThreeOfAKind,
+        //葫芦
+            FullHouse,
+        //四条
+            FourOfAKind,
+        //顺子
+            Straight,
+        //同花
+            Flush,
+        //同花顺
+            StraightFlush,
+        //皇家同花顺
+            RoyalFlush
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="cards">五张按照优先大小其次类型排序的牌</param>
+    /// <param name="highCard">高牌</param>
+    /// <param name="pair1">对子(包括1对、3条、4条，若一对则只需要pair1)</param>
+    /// <param name="pair2">对子(第二对，包括2对，葫芦，若两对则需要pair2)</param>
+    /// <returns></returns>
+    public static CombinationType GetCombinationType(List<Card> cards, out Card highCard, out Card pair1, out Card pair2){
+        highCard = null;
+        pair1 = null;
+        pair2 = null;
+        if(cards.Count != 5){
+            Debug.LogError("牌数不对！");
+            return CombinationType.HighCard;
+        }
+        
+        //判断同花
+        bool isSameType = true;
+        uint type = cards[0].CardData.CardType;
+        foreach(var card in cards){
+            if(card.CardData.CardType != type){
+                isSameType = false;
+                break;
+            }
+        }
+
+        if(isSameType){
+            //如果是同花
+            //判断是否同花顺
+            bool isStraightFlush = true;
+            for(int i = 0; i < 4; i++){
+                if(cards[i].CardData.CardNum != cards[i+1].CardData.CardNum - 1){
+                    //A是特殊情况，其CardNum为1，但是最大
+                    if(cards[i+1].CardData.CardNum == 1 && cards[i].CardData.CardNum == 13){
+                        continue;
+                    }
+                    isStraightFlush = false;
+                    break;
+                }
+            }
+            if(isStraightFlush){
+                //如果是同花顺
+                //判断是否为皇家同花顺
+                if(cards[4].CardData.CardNum == 1){
+                    //如果最高牌为A，则为皇家同花顺
+                    highCard = cards[4];
+                    return CombinationType.RoyalFlush;
+                }
+                else{
+                    //不是皇家同花顺，则为同花顺
+                    highCard = cards[4];
+                    return CombinationType.StraightFlush;
+                }
+            }
+            else{
+                //如果不是同花顺，则为同花
+                highCard = cards[4];
+                return CombinationType.Flush;
+            }
+        }else{
+            //如果不是同花
+            //判断是否为顺子
+            bool isStraight = true;
+            for(int i = 0; i < 4; i++){
+                if(cards[i].CardData.CardNum != cards[i+1].CardData.CardNum - 1){
+                    //A是特殊情况，其CardNum为1，但是最大
+                    if(cards[i+1].CardData.CardNum == 1 && cards[i].CardData.CardNum == 13){
+                        continue;
+                    }
+                    isStraight = false;
+                    break;
+                }
+            }
+            if(isStraight){
+                //如果是顺子
+                return CombinationType.Straight;
+            }else{
+                //如果不是顺子
+                //判断是否为四条
+                bool isFourOfAKind = false;
+                bool frontFourSame = true;
+                bool backFourSame = true;
+                {
+                    //检查前四张牌
+                    for(int i = 0; i < 4; i++){
+                        if(cards[i].CardData.CardNum != cards[0].CardData.CardNum){
+                            frontFourSame = false;
+                            break;
+                        }
+                    }
+                    //检查后四张牌
+                    for(int i = 1; i < 5; i++){
+                        if(cards[i].CardData.CardNum != cards[4].CardData.CardNum){
+                            backFourSame = false;
+                            break;
+                        }
+                    }
+                    isFourOfAKind = frontFourSame || backFourSame;
+                }
+                if(isFourOfAKind){
+                    //如果是四条
+                    pair1 = frontFourSame ? cards[0] : cards[4];
+                    return CombinationType.FourOfAKind;
+                }else{
+                    //如果不是四条
+                    //判断是否为三条
+                    bool isThreeOfAKind = false;
+                    int startIndex = 0;
+                    for(int i=0;i<3;i++){
+                        int count = 1;
+                        for(int j=0;j<2;j++){
+                            if(cards[i+j].CardData.CardNum == cards[i+j+1].CardData.CardNum){
+                                count++;
+                            }
+                        }
+                        if(count == 3){
+                            isThreeOfAKind = true;
+                            startIndex = i;
+                            break;
+                        }
+                    }
+                    if(isThreeOfAKind){
+                        //如果是三条
+                        //判断是否为葫芦
+                        bool isFullHouse = false;
+                        int secondPairStartIndex = 0;
+                        //startIndex只可能是0、1、2
+                        if(startIndex == 1){
+                            //startIndex为0，不可能再出现一对了
+                            isFullHouse = false;
+                        }else{
+                            //startIndex为0或2，可能出现一对
+                            if(startIndex == 0){
+                                if(cards[3].CardData.CardNum == cards[4].CardData.CardNum){
+                                    secondPairStartIndex = 3;
+                                    isFullHouse = true;
+                                }
+                            }else{
+                                if(cards[0].CardData.CardNum == cards[1].CardData.CardNum){
+                                    secondPairStartIndex = 0;
+                                    isFullHouse = true;
+                                }
+                            }
+                        }
+                        if(isFullHouse){
+                            //如果是葫芦
+                            pair1 = cards[startIndex];
+                            pair2 = cards[secondPairStartIndex];
+                            return CombinationType.FullHouse;
+                        }else{
+                            //如果不是葫芦,则为三条
+                            pair1 = cards[startIndex];
+                            return CombinationType.ThreeOfAKind;
+                        }
+                    }
+                    //如果不是三条
+                    //判断是否为一对
+                    bool isOnePair = false;
+                    int pairStartIndex = 0;
+                    for(int i=0;i<3;i++){
+                        if(cards[i].CardData.CardNum == cards[i+1].CardData.CardNum){
+                            isOnePair = true;
+                            pairStartIndex = i;
+                            break;
+                        }
+                    }
+                    if(isOnePair){
+                        //如果是一对
+                        //判断是否为两对
+                        bool isTwoPair = false;
+                        int secondPairStartIndex = 0;
+                        switch(pairStartIndex){
+                            case 0:
+                                for(int i = 2; i < 3; i++){
+                                    if(cards[i].CardData.CardNum == cards[i+1].CardData.CardNum){
+                                        isTwoPair = true;
+                                        secondPairStartIndex = i;
+                                        break;
+                                    }
+                                }
+                                break;
+                            case 1:
+                                if(cards[3].CardData.CardNum == cards[4].CardData.CardNum){
+                                    isTwoPair = true;
+                                    secondPairStartIndex = 3;
+                                }
+                                break;
+                            //其他情况不可能出现，保证了pairStartIndex绝对小于secondPairStartIndex
+                            default:
+                                Debug.LogError("错误的索引！");
+                                break;
+                        }
+                        if(isTwoPair){
+                            //如果是两对
+                            pair1 = cards[pairStartIndex];
+                            pair2 = cards[secondPairStartIndex];
+                            if(pairStartIndex == 0){
+                                if(secondPairStartIndex == 2){
+                                    highCard = cards[4];
+                                }else{
+                                    highCard = cards[2];
+                                }
+                            }else{
+                                highCard = cards[0];
+                            }
+                            return CombinationType.TwoPair;
+                        }else{
+                            //如果不是两对
+                            pair1 = cards[pairStartIndex];
+                            if(pairStartIndex == 3){
+                                highCard = cards[2];
+                            }else{
+                                highCard = cards[4];
+                            }
+                            return CombinationType.OnePair;
+                        }
+                    }
+                    //如果不是一对
+                    //那就是高牌
+                    highCard = cards[4];
+                    return CombinationType.HighCard;
+                }
+            }
+        }
     }
 }

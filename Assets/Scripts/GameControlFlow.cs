@@ -172,6 +172,10 @@ public class GameControlFlow : MonoBehaviour
         }
     }
 
+    public void CalculateWinner(){
+        currentPlayer = sharedInfo.CurrentActivePlayerNode.Item;
+    }
+
 #region  Debug
     private void Update()
     {
