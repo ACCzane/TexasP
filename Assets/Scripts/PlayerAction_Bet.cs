@@ -5,14 +5,13 @@ using UnityEngine.UI;
 
 public class PlayerAction_Bet : MonoBehaviour
 {
-    private Button betButton;
+    public Button BetButton{get; private set;}
     [SerializeField] private TMPro.TextMeshProUGUI betText;
-    [SerializeField] private PlayerControl playerControl;
+
     private void Awake(){
-        betButton = GetComponent<Button>();
-        betButton.onClick.AddListener(OnBetButtonClick);
+        BetButton = GetComponent<Button>();
     }
-    private void OnBetButtonClick(){
+    public void OnBetButtonClick(PlayerControl playerControl){
         float betAmount = float.Parse(betText.text);
         playerControl.Player_Bet(betAmount);
     }

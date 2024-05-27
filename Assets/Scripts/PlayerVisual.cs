@@ -8,12 +8,16 @@ using UnityEngine.UI;
 public class PlayerVisual : MonoBehaviour
 {
     [SerializeField]private Image icon;
+    [SerializeField]private Image infoPanel;
     [SerializeField]private TextMeshProUGUI playerName;
     [SerializeField]private TextMeshProUGUI rank;
     [SerializeField]private TextMeshProUGUI money;
     [SerializeField]private TextMeshProUGUI bet;
     [SerializeField]private TextMeshProUGUI stat;
 
+    private Color controlColor = new Color32(70, 231, 62, 135);
+    private Color defaultColor = new Color32(255, 255, 255, 130);
+    private Color foldColor = new Color32(255, 20, 20, 130);
 
     [SerializeField]private GameObject card1;
     [SerializeField]private GameObject card2;
@@ -26,6 +30,7 @@ public class PlayerVisual : MonoBehaviour
         player.OnBet += UpdateBet;
         player.OnChangeStat += UpdateStat;
         player.OnUpdateCards += UpdateCardsSprite;
+        player.OnControl += UpdateColor;
     }
 
     private void UpdateCardsSprite(object sender, uint e)
@@ -67,8 +72,34 @@ public class PlayerVisual : MonoBehaviour
             case 4:
                 stat.text = "All-In";
                 break;
+            case 5:
+                stat.text = "Hold";
+                break;
             default:
                 stat.text = "Unknown";
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 0: default, 1: control, -1: fold
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private void UpdateColor(object sender, int e)
+    {
+        switch (e){
+            case 0:
+                infoPanel.color = defaultColor;
+                break;
+            case 1:
+                infoPanel.color = controlColor;
+                break;
+            case -1:
+                infoPanel.color = foldColor;
+                break;
+            default:
+                infoPanel.color = defaultColor;
                 break;
         }
     }
@@ -82,4 +113,5 @@ public class PlayerVisual : MonoBehaviour
         card1.GetComponent<Image>().sprite = CardFileLoader.LoadFile(54);
         card2.GetComponent<Image>().sprite = CardFileLoader.LoadFile(54);
     }
+
 }

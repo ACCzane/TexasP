@@ -56,16 +56,31 @@ public class Player : MonoBehaviour
     public float Money { get => money; set => money = value; }
 
     public float Bet { get => bet; set => bet = value; }
+    public float Upper_bet { get => upper_bet; set => upper_bet = value; }
 
+    /// <summary>
+    /// 玩家状态, 0-5:弃牌、过牌、跟注、加注、AllIn、等待
+    /// </summary>
     public uint Stat { get => stat; set => stat = value; }
 
     public bool Allin { get => allin; set => allin = value; }
 
     public bool Check { get => check; set => check = value; }
 
+
+    public string PlayerPrefabPath = "Assets/Prefabs/CanvasPrefab/Player.prefab";
+    public string PlayerControlPath = "Assets/Prefabs/CanvasPrefab/PlayerControl.prefab";
+    [SerializeField] private Transform playerControlParent;
+    private GameObject playerControl;
+
+    public bool isMyTurn = false;
+    public bool transistionToNextPlayer = false;
+
+
 #endregion
 
 #region 事件
+
     public EventHandler<float> OnChangeTotalMoney;
     public EventHandler<float> OnBet;
     public EventHandler<uint> OnChangeStat;
@@ -74,9 +89,19 @@ public class Player : MonoBehaviour
     /// 玩家手牌更新事件, uint值为0表示牌背、1表示牌面、2表示没牌
     /// </summary>
     public EventHandler<uint> OnUpdateCards;
+
+    /// <summary>
+    /// 当前是本玩家回合触发
+    /// </summary>
+    public EventHandler<int> OnControl;
+
 #endregion
 
 #region API
+    private void Awake(){
+        CreatePlayerControl();
+    }
+
     /// <summary>
     /// 0-3代表下注、弃牌、过牌、全压
     /// </summary>
@@ -105,6 +130,7 @@ public class Player : MonoBehaviour
             default:
                 break;
         }
+        HidePlayerControl();
     }
 
     public void CountValue()
@@ -116,6 +142,10 @@ public class Player : MonoBehaviour
         // 最好的牌型中的最大牌的点数
     }
 
+    /// <summary>
+    /// 此处bet为增加值，不是直接下注值
+    /// </summary>
+    /// <param name="bet"></param>
     public void Player_Bet(float bet)
     {
         // 玩家下注
@@ -126,13 +156,15 @@ public class Player : MonoBehaviour
                 DoBet(bet);
             }else{
                 //上家下过注，可以跟、加
-                if(bet == upper_bet){
+                Debug.Log(bet);
+                Debug.Log(upper_bet);
+                if(bet + Bet == Upper_bet){
                     //跟上家
                     DoBet(bet);
 
                     Stat = 2;
                     OnChangeStat?.Invoke(this, Stat);
-                }else if(bet >= upper_bet * 2){
+                }else if(bet + Bet >= Upper_bet * 2){
                     //加注
                     DoBet(bet);
 
@@ -164,6 +196,7 @@ public class Player : MonoBehaviour
         // 玩家弃牌
         Stat = 0;
         OnChangeStat?.Invoke(this, Stat);
+        OnControl?.Invoke(this, -1);
     }
 
     private void Player_Check()
@@ -179,13 +212,55 @@ public class Player : MonoBehaviour
         OnChangeStat?.Invoke(this, Stat);
     }
 
+    public void Player_Hold(){
+        Stat = 5;
+        OnChangeStat?.Invoke(this, Stat);
+    }
+
     public void Addcard(Card card1, Card card2){
         // 玩家摸牌
         cards[0] = card1;
         cards[1] = card2;
         OnUpdateCards?.Invoke(this, 1);
     }
-    #endregion
+
+    public void CreatePlayerControl(){
+        playerControl = Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerControlPath), playerControlParent);
+        //TODO: 将player（this）绑定到prefab的脚本中
+        playerControl.GetComponent<PlayerControl>().BindPlayer(this);
+    }
+
+    public void ShowPlayerControl(){
+        if(Upper_bet != 0){
+            //无法过牌
+            playerControl.GetComponent<PlayerControl>().Show(false);
+        }else{
+            playerControl.GetComponent<PlayerControl>().Show(true);
+        }
+        transistionToNextPlayer = false;
+        isMyTurn = true;
+        OnControl?.Invoke(this, 1);
+    }
+
+    public void HidePlayerControl(){
+        playerControl.GetComponent<PlayerControl>().Hide();
+        transistionToNextPlayer = true;
+        isMyTurn = false;
+        if(stat != 0)
+            OnControl?.Invoke(this, 0);
+    }
+
+    /// <summary>
+    /// 把当前下的注全清空，更新Visual的元素
+    /// </summary>
+    public void Update_toNextTerm(){
+        Bet = 0;
+        OnBet?.Invoke(this, 0);
+        OnChangeTotalMoney?.Invoke(this, Money);
+        //OnChangeTotalMoney?.Invoke(this, 0);
+        //OnChangeStat?.Invoke(this, 0);
+    }
+#endregion
 }
 
 /// <summary>
@@ -254,10 +329,18 @@ public class LinkList<T>{
             Debug.LogError("LinkList is empty");
             return false;
         }
-        Node<T> node = FirstNode;
-        if(node.Item.Equals(item)){
+        if(FirstNode == LastNode && FirstNode.Item.Equals(item)){
             FirstNode = null;
             LastNode = null;
+            isEmpty = true;
+            return true;
+        }
+        Node<T> node = FirstNode;
+        if(node.Item.Equals(item)){
+            //如果删除的是头结点，则需要更新头节点
+            FirstNode = node.Next;
+            node.Prev.Next = node.Next;
+            node.Next.Prev = node.Prev;
             return true;
         }
         node = node.Next;
@@ -265,10 +348,51 @@ public class LinkList<T>{
             if(node.Item.Equals(item)){
                 node.Prev.Next = node.Next;
                 node.Next.Prev = node.Prev;
+                //如果删除的是尾结点，则需要更新尾节点
+                if(node == LastNode){
+                    LastNode = node.Prev;
+                }
                 return true;
             }
             node = node.Next;
         }
         return false;
+    }
+    public int Count(){
+        Node<T> node = FirstNode;
+        if(FirstNode == null){
+            return 0;
+        }
+        else if(FirstNode == LastNode){
+            return 1;
+        }
+        node = FirstNode.Next;
+        int count = 1;
+        while(node != FirstNode){
+            count++;
+            node = node.Next;
+        }
+        return count;
+    }
+
+    public LinkList<T> CopySelf(){
+        LinkList<T> linkList = new LinkList<T>();
+        if(this.Count() == 0){
+            return linkList;
+        }
+        else if(this.Count() == 1){
+            Node<T> node1 = FirstNode;
+            linkList.Add(node1.Item);
+            return linkList;
+        }else{
+            Node<T> node = FirstNode;
+            linkList.Add(node.Item);
+            node = node.Next;
+            while(node!=FirstNode){
+                linkList.Add(node.Item);
+                node = node.Next;
+            }
+            return linkList;
+        }
     }
 }

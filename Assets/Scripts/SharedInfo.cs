@@ -17,6 +17,15 @@ public class SharedInfo
     private Player currentPlayer;
     private Player currentActivePlayer;
 
+    /// <summary>
+    /// 所有的Player
+    /// </summary>
+    public LinkList<Player> Players { get { return players; } }
+    /// <summary>
+    /// 还留在牌局的Player
+    /// </summary>
+    public LinkList<Player> ActivePlayers { get { return activePlayers; } }
+
     public Node<Player> CurrentPlayerNode { get { return currentPlayerNode; } set{currentPlayerNode = value; currentPlayer = value.Item; }}
     public Node<Player> CurrentActivePlayerNode { get { return currentActivePlayerNode; } set { currentActivePlayerNode = value; currentActivePlayer = value.Item; } }
     public Player CurrentPlayer { get { return currentPlayer; } }
@@ -27,8 +36,8 @@ public class SharedInfo
     /// </summary>
     /// <param name="_players"></param>
     public SharedInfo(LinkList<Player> _players){
-        players = _players;
-        activePlayers = _players;
+        players = _players.CopySelf();
+        activePlayers = _players.CopySelf();
         CurrentPlayerNode = players.FirstNode;
         CurrentActivePlayerNode = activePlayers.FirstNode;
     }

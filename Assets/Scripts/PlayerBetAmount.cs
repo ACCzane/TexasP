@@ -6,23 +6,36 @@ using UnityEngine.EventSystems;
 
 public class PlayerBetAmount : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    [SerializeField] private Player player;
+    public Player Player{get; set;}
     private TMPro.TextMeshProUGUI textMesh;
+    private float maxBetAmount;
+    private float minBetAmount;
+    private float minDoubleBetAmount;
     private Coroutine scrollCoroutine;
     private void Awake()
     {
         textMesh = GetComponent<TMPro.TextMeshProUGUI>();
     }
+
+    /// <summary>
+    /// 最开始显示最小金额
+    /// </summary>
+    public void FirstShowAmount(){
+        maxBetAmount = Player.Money;
+        minBetAmount = Player.Upper_bet - Player.Bet;
+        minDoubleBetAmount = Player.Upper_bet * 2 - Player.Bet;
+        textMesh.text = minBetAmount.ToString("F1");
+    }
     
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Debug.Log("Enter");
+        //Debug.Log("Enter");
         scrollCoroutine = StartCoroutine(CheckScroll());
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        Debug.Log("Exit");
+        //Debug.Log("Exit");
         StopCoroutine(scrollCoroutine);
     }
 
@@ -58,13 +71,20 @@ public class PlayerBetAmount : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
                 float scrollAmount = currentScroll * speed;
                 float newFloat = float.Parse(textMesh.text) + scrollAmount;
-                if (newFloat < 0)
+                if (newFloat < minBetAmount)
                 {
-                    newFloat = 0;
+                    newFloat = minBetAmount;
                 }
-                if (newFloat > player.Money)
+                if(minBetAmount < newFloat && newFloat < minDoubleBetAmount){
+                    if(scrollAmount > 0){
+                        newFloat = minDoubleBetAmount;
+                    }else if(scrollAmount < 0){
+                        newFloat = minBetAmount;
+                    }
+                }
+                if (newFloat > maxBetAmount)
                 {
-                    newFloat = player.Money;
+                    newFloat = maxBetAmount;
                 }
                 textMesh.text = newFloat.ToString("F1");
 
@@ -86,7 +106,6 @@ public class PlayerBetAmount : MonoBehaviour, IPointerEnterHandler, IPointerExit
                     previousScroll = 0;
                 }
             }
-            Debug.Log(timeSinceLastScroll);
             yield return null;
         }
     }

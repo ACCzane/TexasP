@@ -9,33 +9,49 @@ public class PlayerControl : MonoBehaviour
     /// <summary>
     /// 联机游戏中的本地玩家
     /// </summary>
-    [SerializeField]private Player player;
+    public Player Player;
+    [SerializeField]private PlayerBetAmount playerBetAmount;
+    [SerializeField]private PlayerAction_Bet playerAction_Bet;
+    [SerializeField]private GameObject checkPanel;
+    private void Start(){
+        playerAction_Bet.BetButton.onClick.AddListener(() => playerAction_Bet.OnBetButtonClick(this));
+    }
+
+    public void BindPlayer(Player player){
+
+        Player = player;
+        playerBetAmount.Player = player;
+
+        gameObject.SetActive(false);
+    }
+
+    public void Show(){
+        playerBetAmount.FirstShowAmount();
+        gameObject.SetActive(true);
+    }
+    public void Show(bool canCheck){
+        playerBetAmount.FirstShowAmount();
+        gameObject.SetActive(true);
+        if(!canCheck){
+            checkPanel.SetActive(false);
+        }else{
+            checkPanel.SetActive(true);
+        }
+    }
+
+    public void Hide(){
+        gameObject.SetActive(false);
+    }
 
     public void Player_Check(){
-        player.Decide(2,0f);
+        Player.Decide(2,0f);
     }
 
     public void Player_Fold(){
-        player.Decide(1,0f);
+        Player.Decide(1,0f);
     }
 
     public void Player_Bet(float bet){
-        player.Decide(0, bet);
+        Player.Decide(0, bet);
     }
-
-#region debug
-    private void Update(){
-        if(Input.GetKeyDown(KeyCode.Space)){
-            //开始
-
-            //玩家获得本金
-            player.Money = 100f;
-            player.OnChangeTotalMoney?.Invoke(this, player.Money);
-        
-            //Bet初始为0
-            player.Bet = 0f;
-            player.OnBet?.Invoke(this, player.Bet);
-        }
-    }
-#endregion
 }

@@ -323,11 +323,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   icon: {fileID: 1788292114494682217}
+  infoPanel: {fileID: 9098401319874504955}
   playerName: {fileID: 8312650960245184501}
   rank: {fileID: 4699137668653889318}
   money: {fileID: 7762267937071103682}
   bet: {fileID: 1525265397936356835}
   stat: {fileID: 3636245638576905749}
+  card1: {fileID: 4858946249988530355}
+  card2: {fileID: 1727637480747650254}
   player: {fileID: 4194572494945689430}
 --- !u!1 &2071460025705897002
 GameObject:
@@ -722,6 +725,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80830ff992b79ee41b8a4eee491a3a43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  PlayerPrefabPath: Assets/Prefabs/Player.prefab
+  PlayerControlPath: Assets/Prefabs/CanvasPrefab/PlayerControl.prefab
+  playerControlParent: {fileID: 0}
+  isMyTurn: 0
+  transistionToNextPlayer: 0
 --- !u!1 &4858946249988530355
 GameObject:
   m_ObjectHideFlags: 0

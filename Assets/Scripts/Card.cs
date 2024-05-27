@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public class Card : MonoBehaviour
+public class Card
 {
 #region 静态
     /// <summary>
@@ -13,15 +13,20 @@ public class Card : MonoBehaviour
     /// 26-38: 方块A-K
     /// 39-51: 梅花A-K
     /// </summary>
-    public static CardData[] cards = new CardData[52];
+    public static List<CardData> cards = new List<CardData>();
 
     static Card()
     {
+        InitializeCards();
+    }
+
+    public static void InitializeCards(){
+        cards.Clear();
         for (int i = 0; i < 52; i++)
         {
             uint cardType = (uint)(i / 13);
             uint cardNum = (uint)(i % 13) + 1;
-            cards[i] = new CardData(cardType, cardNum);
+            cards.Add(new CardData(cardType, cardNum));
         }
     }
 
@@ -30,21 +35,25 @@ public class Card : MonoBehaviour
     /// </summary>
     public static CardData GetRandomCard()
     {
-        int index = Random.Range(0, 52);
-        while (cards[index].Used)
-        {
-            index = Random.Range(0, 52);
+        if(cards.Count == 0){
+            Debug.LogError("没有牌了！");
+            return null;
         }
-        cards[index].Used = true;
-        return cards[index];
+        int index = Random.Range(0, cards.Count-1);
+        // while (cards[index].Used)
+        // {
+        //     index = Random.Range(0, 52);
+        // }
+        CardData cardData = cards[index];
+        cards.Remove(cards[index]);
+        return cardData;
     }
 #endregion
    
     private CardData cardData;
     public CardData CardData { get { return cardData; } set { cardData = value; } }
 
-    public Card()
-    {
+    public Card(){
         cardData = GetRandomCard();
     }
 
@@ -70,15 +79,12 @@ public class CardData{
     /// <summary>
     /// 0:unused, 1:used
     /// </summary>
-    private bool used;
     public uint CardType { get { return cardType; } }
     public uint CardNum { get { return cardNum; } }
-    public bool Used { get { return used; } set { used = value; } }
     public CardData(uint cardType, uint cardNum)
     {
         this.cardType = cardType;
         this.cardNum = cardNum;
-        this.used = false;
     }
 }
 
@@ -101,10 +107,8 @@ public static class CardFileLoader{
     /// <param name="index">0-51为正常卡牌，52-53为大小王，54-58为牌背，59为空白</param>
     public static Sprite LoadFile(uint index){
         string fullpath = path + "/card_list_2d_" + index + ".asset";
-        Debug.Log(fullpath);
         //Sprite sprite = Resources.Load<Sprite>(fullpath);
         Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullpath);
-        Debug.Log(sprite);
         return sprite;
     }
 }
