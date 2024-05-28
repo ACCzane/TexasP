@@ -154,31 +154,32 @@ public static class CardFileLoader{
     }
 }
 
-public class CardCombinationHelper{
-    public enum CombinationType{
+public enum CombinationType{
         //高牌
         HighCard,
         //一对
-            OnePair,
+        OnePair,
         //两对    
-            TwoPair,
+        TwoPair,
         //三条
-            ThreeOfAKind,
+        ThreeOfAKind,
         //葫芦
-            FullHouse,
+        FullHouse,
         //四条
-            FourOfAKind,
+        FourOfAKind,
         //顺子
-            Straight,
+        Straight,
         //同花
-            Flush,
+        Flush,
         //同花顺
-            StraightFlush,
+        StraightFlush,
         //皇家同花顺
-            RoyalFlush
+        RoyalFlush
     }
+
+public class CardCombinationHelper{
     /// <summary>
-    /// 
+    /// 输入五张牌的List，返回牌型和高牌（如有）、对子1数值（如有）、对子2数值（如有）
     /// </summary>
     /// <param name="cards">五张按照优先大小其次类型排序的牌</param>
     /// <param name="highCard">高牌</param>
@@ -325,7 +326,7 @@ public class CardCombinationHelper{
                         if(isFullHouse){
                             //如果是葫芦
                             pair1 = cards[startIndex];
-                            pair2 = cards[secondPairStartIndex];
+                            //pair2 = cards[secondPairStartIndex]; --no need
                             return CombinationType.FullHouse;
                         }else{
                             //如果不是葫芦,则为三条
@@ -371,7 +372,7 @@ public class CardCombinationHelper{
                                 break;
                         }
                         if(isTwoPair){
-                            //如果是两对
+                            //如果是两对, pair1绝对比pair2小
                             pair1 = cards[pairStartIndex];
                             pair2 = cards[secondPairStartIndex];
                             if(pairStartIndex == 0){
@@ -404,3 +405,102 @@ public class CardCombinationHelper{
         }
     }
 }
+
+public class CardsValue{
+        CombinationType type;
+        Card highCard;
+        Card pair1;
+        Card pair2;
+        public CardsValue(CombinationType type, Card highCard ,Card pair1 ,Card pair2){
+            this.type = type;
+            this.highCard = highCard;
+            this.pair1 = pair1;
+            this.pair2 = pair2;
+        }
+        public static bool operator <(CardsValue left, CardsValue right){
+            if(left.type != right.type){
+                return (int)left.type < (int)right.type;
+            }else{
+                switch(left.type){
+                    case CombinationType.StraightFlush:
+                        return left.highCard < right.highCard;
+                    case CombinationType.Flush:
+                        return left.highCard < right.highCard;
+                    case CombinationType.Straight:
+                        return left.highCard < right.highCard;
+                    case CombinationType.FourOfAKind:
+                        return left.pair1 < right.pair1;
+                    case CombinationType.FullHouse:
+                        return left.pair1 < right.pair1;
+                    case CombinationType.ThreeOfAKind:
+                        return left.pair1 < right.pair1;
+                    case CombinationType.TwoPair:
+                        if(left.pair2 == right.pair2){
+                            if(left.pair1 == right.pair1){
+                                return left.highCard < right.highCard; 
+                            }else{
+                                return left.pair1 < right.pair1;
+                            }
+                        }else{
+                            return left.pair2 < right.pair2;
+                        }
+                    case CombinationType.OnePair:
+                        if(left.pair1 == right.pair1){
+                            return left.highCard < right.highCard;
+                        }else{
+                            return left.pair1 < right.pair1;
+                        }
+                    case CombinationType.HighCard:
+                        return left.highCard < right.highCard;
+                    default:
+                        return left < right;
+                }
+            }
+        }
+        public static bool operator >(CardsValue left,CardsValue right){
+            if(left.type != right.type){
+                return (int)left.type > (int)right.type;
+            }else{
+                switch(left.type){
+                    case CombinationType.StraightFlush:
+                        return left.highCard > right.highCard;
+                    case CombinationType.Flush:
+                        return left.highCard > right.highCard;
+                    case CombinationType.Straight:
+                        return left.highCard > right.highCard;
+                    case CombinationType.FourOfAKind:
+                        return left.pair1 > right.pair1;
+                    case CombinationType.FullHouse:
+                        return left.pair1 > right.pair1;
+                    case CombinationType.ThreeOfAKind:
+                        return left.pair1 > right.pair1;
+                    case CombinationType.TwoPair:
+                        if(left.pair2 == right.pair2){
+                            if(left.pair1 == right.pair1){
+                                return left.highCard > right.highCard; 
+                            }else{
+                                return left.pair1 > right.pair1;
+                            }
+                        }else{
+                            return left.pair2 > right.pair2;
+                        }
+                    case CombinationType.OnePair:
+                        if(left.pair1 == right.pair1){
+                            return left.highCard > right.highCard;
+                        }else{
+                            return left.pair1 > right.pair1;
+                        }
+                    case CombinationType.HighCard:
+                        return left.highCard > right.highCard;
+                    default:
+                        return left > right;
+                }
+            }
+        }
+        public static bool operator ==(CardsValue left, CardsValue right){
+            return left.type == right.type && left.pair1 == right.pair1 && left.pair2 == right.pair2;
+        }
+        public static bool operator !=(CardsValue left, CardsValue right){
+            return !(left.type == right.type && left.pair1 == right.pair1 && left.pair2 == right.pair2);
+        }
+    }

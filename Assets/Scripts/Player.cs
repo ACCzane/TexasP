@@ -77,7 +77,6 @@ public class Player : MonoBehaviour
     public bool isMyTurn = false;
     public bool transistionToNextPlayer = false;
 
-
 #endregion
 
 #region 事件
@@ -263,16 +262,85 @@ public class Player : MonoBehaviour
         //OnChangeStat?.Invoke(this, 0);
     }
 
-    public void CountHandValue(List<Card> publicCards){
-        //cards保存7张牌，包括2张手牌和5张公共牌
-        List<Card> cards = new List<Card>();
-        for(int i = 0; i < 2; i++){
-            cards.Add(this.cards[i]);
+    class CardComparer : IComparer<Card>
+    {
+        public int Compare(Card card1, Card card2)
+        {
+            if(card1.CardData.CardNum < card2.CardData.CardNum){
+                if(card1.CardData.CardNum == 1){
+                    //A是最大的
+                    return -1;
+                }
+                return 1;
+            }else if(card1.CardData.CardNum > card2.CardData.CardNum){
+                if(card2.CardData.CardNum == 1){
+                    //A是最大的
+                    return 1;
+                }
+                return -1;
+            }
+            //card1.CardData.CardNum == card2.CardData.CardNum
+            if(card1.CardData.CardType < card2.CardData.CardType){
+                return -1;
+            }else if(card1.CardData.CardType == card2.CardData.CardType){
+                return 0;
+            }else{
+                return 1;
+            }
         }
-        cards.AddRange(publicCards);
+    }
+
+    /// <summary>
+    /// 输入公共牌的List<Card>，返回CardsValue类，里面定义了类型、高牌、pair1、pair2，也重载了运算符
+    /// </summary>
+    /// <param name="publicCards"></param>
+    public CardsValue CountHandValue(List<Card> publicCards){
+        //cards保存7张牌，包括2张手牌和5张公共牌
+        List<Card> sevenCards = new List<Card>();
+        for(int i = 0; i < 2; i++){
+            sevenCards.Add(this.cards[i]);
+        }
+        sevenCards.AddRange(publicCards);
         //Card类的运算符已重载，可以排序
-        cards.Sort();
+        sevenCards.Sort(new CardComparer());
         
+        //7个里挑选5个
+
+        CombinationType type;
+        Card highCard;
+        Card pair1;
+        Card pair2;
+
+        List<Card> fiveCards = new List<Card>();
+
+        CardsValue maxCardsValue = new CardsValue(0,null,null,null);
+
+        for(int i=0;i<6;i++){
+            for(int j=i;j<7;j++){
+                fiveCards.Clear();
+
+                for(int k=0;k<7;j++){
+                    if(k == i || k == j){
+                        continue;
+                    }
+                    fiveCards.Add(cards[k]);
+                }
+                //取到五张牌后, 维护最大牌型
+                Debug.Log(fiveCards.Count);
+                type = CardCombinationHelper.GetCombinationType(fiveCards, out highCard, out pair1, out pair2);
+                CardsValue newCardsValue = new CardsValue(type, highCard, pair1, pair2);
+                if(newCardsValue > maxCardsValue){
+                    maxCardsValue = newCardsValue;
+                }
+            }
+        }
+
+        return maxCardsValue;
+    }
+
+    public void WinMoney(float money){
+        Money += money;
+        OnChangeTotalMoney?.Invoke(this, money);
     }
 #endregion
 }

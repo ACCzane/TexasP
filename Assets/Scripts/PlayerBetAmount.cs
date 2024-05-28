@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System;
 
 public class PlayerBetAmount : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -22,7 +23,7 @@ public class PlayerBetAmount : MonoBehaviour, IPointerEnterHandler, IPointerExit
     /// </summary>
     public void FirstShowAmount(){
         maxBetAmount = Player.Money;
-        minBetAmount = Player.Upper_bet - Player.Bet;
+        minBetAmount = Math.Max(Player.Upper_bet - Player.Bet, 0.1f);
         minDoubleBetAmount = Player.Upper_bet * 2 - Player.Bet;
         textMesh.text = minBetAmount.ToString("F1");
     }

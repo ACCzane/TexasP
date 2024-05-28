@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class PublicCard : MonoBehaviour
 {
     [SerializeField]private Image[] cardImages;
-    private List<Card> publicCards;
+    public List<Card> publicCards{get; private set;}
     private int currentIndex = 0;
 
     private void Awake(){

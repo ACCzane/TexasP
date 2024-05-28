@@ -102,10 +102,18 @@ public class GameControlFlow : MonoBehaviour
             case 4:
                 //每个还留在牌局里的人计算手牌大小
                 //最大的获胜
+                List<Player> winners = CalculateWinner();
+                // foreach(Player player in winners){
+                //     player.WinMoney( (float)Math.Round((dealer.totalMoney/winners.Count),1,MidpointRounding.AwayFromZero) );
+                // }
                 break;
         }
     }
 
+    /// <summary>
+    /// 当前回合（指玩家可控制的回合）的循环
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator CurrentTermLoop(){
         //Debug.Log(sharedInfo.CurrentActivePlayerNode.Item.Bet);
         //Debug.Log(sharedInfo.CurrentActivePlayerNode.Prev.Item.Bet);
@@ -171,8 +179,34 @@ public class GameControlFlow : MonoBehaviour
         }
     }
 
-    public void CalculateWinner(){
-        currentPlayer = sharedInfo.CurrentActivePlayerNode.Item;
+    public List<Player> CalculateWinner(){
+        List<Player> winners = new List<Player>();
+
+        Node<Player> activePlayerNode = sharedInfo.ActivePlayers.FirstNode;
+        currentPlayer = activePlayerNode.Item;
+
+        //CountHandVAlue有问题
+        CardsValue maxCardsValue = currentPlayer.CountHandValue(publicCard.publicCards);
+        winners.Add(currentPlayer);
+        activePlayerNode = activePlayerNode.Next;
+
+        while(activePlayerNode != sharedInfo.ActivePlayers.FirstNode){
+
+            currentPlayer = activePlayerNode.Item;
+
+            if(currentPlayer.CountHandValue(publicCard.publicCards) > winners[winners.Count-1].CountHandValue(publicCard.publicCards)){
+                winners.Clear();
+                winners.Add(currentPlayer);
+            }
+            else if(currentPlayer.CountHandValue(publicCard.publicCards) == winners[winners.Count-1].CountHandValue(publicCard.publicCards)){
+                winners.Add(currentPlayer);
+            }
+
+            activePlayerNode = activePlayerNode.Next;
+        }
+
+        //此时winners保存了所有胜者（可能有多个）
+        return winners;
     }
 
 #region  Debug
