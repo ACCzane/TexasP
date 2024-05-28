@@ -155,6 +155,7 @@ public class Player : MonoBehaviour
             if(upper_bet == 0){
                 //成为第一个下注的人
                 DoBet(bet);
+                OnChangeStat?.Invoke(this, Stat);
             }else{
                 //上家下过注，可以跟、加
                 Debug.Log(bet);

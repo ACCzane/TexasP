@@ -114,9 +114,9 @@ public class GameControlFlow : MonoBehaviour
         yield return PlayerDecisionLoop();
 
         //如果上一玩家的下注比当前玩家的下注大，或者上一玩家过牌且自己曾经没有过牌，或者上个玩家状态为Hold，则等待玩家决策
-        Debug.Log(sharedInfo.CurrentActivePlayerNode.Prev.Item.Bet);
-        Debug.Log(sharedInfo.CurrentActivePlayerNode.Item.Stat);
-        while(sharedInfo.CurrentActivePlayerNode.Item.Bet < sharedInfo.CurrentActivePlayerNode.Prev.Item.Bet || (sharedInfo.CurrentActivePlayerNode.Prev.Item.Stat == 1 && currentPlayer.Stat != 1)){
+        while(sharedInfo.CurrentActivePlayerNode.Item.Bet < sharedInfo.CurrentActivePlayerNode.Prev.Item.Bet 
+        || (sharedInfo.CurrentActivePlayerNode.Prev.Item.Stat == 1 && currentPlayer.Stat != 1)
+        || sharedInfo.CurrentActivePlayerNode.Prev.Item.Stat == 5){
 
             yield return PlayerDecisionLoop();
             
@@ -150,9 +150,8 @@ public class GameControlFlow : MonoBehaviour
         //玩家做完了决策
         //检测玩家是否弃牌
         if(currentPlayer.Stat == 0){
-            //玩家弃牌
+            //玩家弃牌, 同时获取到下一个玩家
             sharedInfo.ActivePlayers.Delete(currentPlayer);
-            Debug.Log(sharedInfo.ActivePlayers.Count());
         }
 
 
