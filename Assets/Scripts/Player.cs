@@ -9,6 +9,11 @@ public class Player : NetworkBehaviour
 {
 #region 数据
     /// <summary>
+    /// 玩家用户名
+    /// </summary>
+    private string playerName;
+
+    /// <summary>
     /// 玩家手牌
     /// </summary>
     private Card[] cards = new Card[2];
@@ -87,6 +92,7 @@ public class Player : NetworkBehaviour
 #endregion
 
 #region 事件
+    public EventHandler<string> OnChangeName;
 
     public EventHandler<float> OnChangeTotalMoney;
     public EventHandler<float> OnBet;
@@ -369,9 +375,10 @@ public class Player : NetworkBehaviour
         OnWin?.Invoke(this, EventArgs.Empty);
     }
 
-    // private void Awake(){
-    //     CreatePlayerPrefabAndControl();
-    // }
+    public void ChangeName(string name){
+        playerName = name;
+        OnChangeName?.Invoke(this, name);
+    }
 #endregion
 
 #region 网络同步

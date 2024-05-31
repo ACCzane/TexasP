@@ -13,15 +13,22 @@ public class JoinAndHost : NetworkBehaviour
 
     [SerializeField]private Button HostButton;
     [SerializeField]private Button ClientButton;
+    [SerializeField]private Button StartButton;
+    [SerializeField]private NameRegister nameRegister;
+
+    private Player player = null;
 
     public void StartHost(){
         NetworkManager.Singleton.StartHost();
 
-        Player player = CreatePlayer();
+        player = CreatePlayer();
         CreatePlayerControl(player);
 
         HostButton.gameObject.SetActive(false);
         ClientButton.gameObject.SetActive(false);
+        StartButton.gameObject.SetActive(true);
+    
+        StartCoroutine(UsrRegisterName(nameRegister));
     }
     public void StartClient(){
         NetworkManager.Singleton.StartClient();
@@ -29,6 +36,8 @@ public class JoinAndHost : NetworkBehaviour
 
         HostButton.gameObject.SetActive(false);
         ClientButton.gameObject.SetActive(false);
+
+        StartCoroutine(UsrRegisterName(nameRegister));
     }
 
     private IEnumerator WaitingConnection(){
@@ -38,16 +47,30 @@ public class JoinAndHost : NetworkBehaviour
         CreatePlayerServerRpc();
     }
 
+    private IEnumerator UsrRegisterName(NameRegister nameRegister){
+        nameRegister.ShowNameRegisterPanel();
+        while(nameRegister.gameObject.activeSelf){
+            yield return null;
+        }
+        ChangePlayerNameServerRpc(player, nameRegister.playerName);
+    }
+
     [ServerRpc(RequireOwnership = false)]
     public void CreatePlayerServerRpc()
     {
-        Debug.Log("让我看看你在哪执行");
         // 在服务器上生成玩家对象
-        GameObject player = Instantiate(PlayerPrefab);
-        NetworkObject networkObject = player.GetComponent<NetworkObject>();
+        GameObject playerGO = Instantiate(PlayerPrefab);
+        NetworkObject networkObject = playerGO.GetComponent<NetworkObject>();
         networkObject.Spawn();
 
-        player.transform.SetParent(PlayerParent, false);
+        playerGO.transform.SetParent(PlayerParent, false);
+
+        player = playerGO.GetComponent<Player>();
+    }
+
+    [ServerRpc]
+    public void ChangePlayerNameServerRpc(Player player, string name){
+        player.ChangeName(name);
     }
 
     [ClientRpc]

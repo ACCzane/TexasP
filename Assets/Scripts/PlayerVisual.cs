@@ -26,12 +26,18 @@ public class PlayerVisual : MonoBehaviour
     [SerializeField]private Player player;
 
     private void Start() {
+        player.OnChangeName += UpdatePlayerName;
         player.OnChangeTotalMoney += UpdateTotalMoney;
         player.OnBet += UpdateBet;
         player.OnChangeStat += UpdateStat;
         player.OnUpdateCards += UpdateCardsSprite;
         player.OnControl += UpdateColor;
         player.OnWin += UpdateWinnerColor;
+    }
+
+    private void UpdatePlayerName(object sender, string e)
+    {
+        playerName.text = e;
     }
 
     private void UpdateWinnerColor(object sender, EventArgs e)
