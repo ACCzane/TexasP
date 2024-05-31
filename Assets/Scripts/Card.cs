@@ -59,6 +59,7 @@ public class Card
 
     #region 重载运算符
     public static bool operator <(Card card1, Card card2){
+        Debug.Log(card1 + " " + card1.CardData + " " + card1.CardData.CardNum);
         if(card1.CardData.CardNum < card2.CardData.CardNum){
             if(card1.CardData.CardNum == 1){
                 //A是最大的
@@ -140,21 +141,22 @@ public static class CardFactory
 }
 
 public static class CardFileLoader{
-    private static string path = "Assets/PlayingCards/Textures/Sprites";
 
     /// <summary>
     /// 根据索引获得卡牌的Sprite
     /// </summary>
     /// <param name="index">0-51为正常卡牌，52-53为大小王，54-58为牌背，59为空白</param>
     public static Sprite LoadFile(uint index){
-        string fullpath = path + "/card_list_2d_" + index + ".asset";
+        string path = "Sprites/card_list_2d_" + index;
         //Sprite sprite = Resources.Load<Sprite>(fullpath);
-        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullpath);
+        Sprite sprite = Resources.Load<Sprite>(path);
         return sprite;
     }
 }
 
 public enum CombinationType{
+        //维持程序正常运转不可避免的啊啊啊啊啊啊啊啊啊啊的非正常“0”
+        Invalid,
         //高牌
         HighCard,
         //一对
@@ -304,7 +306,6 @@ public class CardCombinationHelper{
                         //如果是三条
                         //判断是否为葫芦
                         bool isFullHouse = false;
-                        int secondPairStartIndex = 0;
                         //startIndex只可能是0、1、2
                         if(startIndex == 1){
                             //startIndex为0，不可能再出现一对了
@@ -313,12 +314,10 @@ public class CardCombinationHelper{
                             //startIndex为0或2，可能出现一对
                             if(startIndex == 0){
                                 if(cards[3].CardData.CardNum == cards[4].CardData.CardNum){
-                                    secondPairStartIndex = 3;
                                     isFullHouse = true;
                                 }
                             }else{
                                 if(cards[0].CardData.CardNum == cards[1].CardData.CardNum){
-                                    secondPairStartIndex = 0;
                                     isFullHouse = true;
                                 }
                             }
@@ -368,7 +367,6 @@ public class CardCombinationHelper{
                                 break;
                             //其他情况不可能出现，保证了pairStartIndex绝对小于secondPairStartIndex
                             default:
-                                Debug.LogError("错误的索引！");
                                 break;
                         }
                         if(isTwoPair){
@@ -407,21 +405,21 @@ public class CardCombinationHelper{
 }
 
 public class CardsValue{
-        CombinationType type;
-        Card highCard;
-        Card pair1;
-        Card pair2;
+        public CombinationType Type{get;set;}
+        public Card highCard{get;set;}
+        public Card pair1{get;set;}
+        public Card pair2{get;set;}
         public CardsValue(CombinationType type, Card highCard ,Card pair1 ,Card pair2){
-            this.type = type;
+            this.Type = type;
             this.highCard = highCard;
             this.pair1 = pair1;
             this.pair2 = pair2;
         }
         public static bool operator <(CardsValue left, CardsValue right){
-            if(left.type != right.type){
-                return (int)left.type < (int)right.type;
+            if(left.Type != right.Type){
+                return (int)left.Type < (int)right.Type;
             }else{
-                switch(left.type){
+                switch(left.Type){
                     case CombinationType.StraightFlush:
                         return left.highCard < right.highCard;
                     case CombinationType.Flush:
@@ -458,10 +456,10 @@ public class CardsValue{
             }
         }
         public static bool operator >(CardsValue left,CardsValue right){
-            if(left.type != right.type){
-                return (int)left.type > (int)right.type;
+            if(left.Type != right.Type){
+                return (int)left.Type > (int)right.Type;
             }else{
-                switch(left.type){
+                switch(left.Type){
                     case CombinationType.StraightFlush:
                         return left.highCard > right.highCard;
                     case CombinationType.Flush:
@@ -498,9 +496,9 @@ public class CardsValue{
             }
         }
         public static bool operator ==(CardsValue left, CardsValue right){
-            return left.type == right.type && left.pair1 == right.pair1 && left.pair2 == right.pair2;
+            return left.Type == right.Type && left.pair1 == right.pair1 && left.pair2 == right.pair2;
         }
         public static bool operator !=(CardsValue left, CardsValue right){
-            return !(left.type == right.type && left.pair1 == right.pair1 && left.pair2 == right.pair2);
+            return !(left.Type == right.Type && left.pair1 == right.pair1 && left.pair2 == right.pair2);
         }
     }

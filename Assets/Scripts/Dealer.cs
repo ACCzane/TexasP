@@ -109,4 +109,7 @@ public class Dealer : MonoBehaviour
         currentRoundTotalMoney += player.Bet;
         player.Update_toNextTerm();
     }
+    public void ResetTotalMoney(){
+        totalMoney = 0;
+    }
 }

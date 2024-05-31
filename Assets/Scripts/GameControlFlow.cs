@@ -103,9 +103,16 @@ public class GameControlFlow : MonoBehaviour
                 //每个还留在牌局里的人计算手牌大小
                 //最大的获胜
                 List<Player> winners = CalculateWinner();
-                // foreach(Player player in winners){
-                //     player.WinMoney( (float)Math.Round((dealer.totalMoney/winners.Count),1,MidpointRounding.AwayFromZero) );
-                // }
+                Debug.Log("winnerCount:"+winners.Count+" total:"+dealer.totalMoney);
+                
+                foreach(Player player in winners){
+                    //赢钱
+                    player.WinMoney( (float)Math.Round((dealer.totalMoney/winners.Count),1,MidpointRounding.AwayFromZero) );
+                    //输出牌型信息
+                    Debug.Log(player + ": " + player.bestCardsValue.Type);
+                }
+                //底池归零
+                dealer.ResetTotalMoney();
                 break;
         }
     }
@@ -180,32 +187,48 @@ public class GameControlFlow : MonoBehaviour
     }
 
     public List<Player> CalculateWinner(){
+        //获胜者
         List<Player> winners = new List<Player>();
+        //缓存玩家手牌
+        List<Card> playerBestCards;
 
         Node<Player> activePlayerNode = sharedInfo.ActivePlayers.FirstNode;
         currentPlayer = activePlayerNode.Item;
 
-        //CountHandVAlue有问题
-        CardsValue maxCardsValue = currentPlayer.CountHandValue(publicCard.publicCards);
+        //计算当前玩家牌型，playerBestCards用于缓存目前的五张牌
+        CardsValue maxCardsValue = currentPlayer.CountHandValue(publicCard.publicCards, out playerBestCards);
+        //玩家操作，更新目前最好的牌型和牌
+        currentPlayer.SetBestValuedCards(maxCardsValue, playerBestCards);
+        //添加胜利玩家
         winners.Add(currentPlayer);
+
         activePlayerNode = activePlayerNode.Next;
 
         while(activePlayerNode != sharedInfo.ActivePlayers.FirstNode){
 
             currentPlayer = activePlayerNode.Item;
 
-            if(currentPlayer.CountHandValue(publicCard.publicCards) > winners[winners.Count-1].CountHandValue(publicCard.publicCards)){
+            
+            maxCardsValue = currentPlayer.CountHandValue(publicCard.publicCards, out playerBestCards);
+
+            List<Card> tempBestCards;
+            CardsValue tempMaxCardsValue = winners[winners.Count-1].CountHandValue(publicCard.publicCards, out tempBestCards);
+
+            if(maxCardsValue > tempMaxCardsValue){
                 winners.Clear();
+                currentPlayer.SetBestValuedCards(maxCardsValue, playerBestCards);
                 winners.Add(currentPlayer);
             }
-            else if(currentPlayer.CountHandValue(publicCard.publicCards) == winners[winners.Count-1].CountHandValue(publicCard.publicCards)){
+            else if(maxCardsValue == tempMaxCardsValue){
+                currentPlayer.SetBestValuedCards(maxCardsValue, playerBestCards);
                 winners.Add(currentPlayer);
             }
 
             activePlayerNode = activePlayerNode.Next;
         }
 
-        //此时winners保存了所有胜者（可能有多个）
+        //此时winners保存了所有胜者（可能有多个）, 每个胜者保存了最好牌型和价值
+
         return winners;
     }
 

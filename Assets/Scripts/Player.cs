@@ -1,13 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Unity.VisualStudio.Editor;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using Unity.Netcode;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
 #region 数据
     /// <summary>
@@ -69,13 +67,22 @@ public class Player : MonoBehaviour
     public bool Check { get => check; set => check = value; }
 
 
-    public string PlayerPrefabPath = "Assets/Prefabs/CanvasPrefab/Player.prefab";
-    public string PlayerControlPath = "Assets/Prefabs/CanvasPrefab/PlayerControl.prefab";
+    public GameObject PlayerPrefab;
+    public GameObject PlayerControlPrefab;
     [SerializeField] private Transform playerControlParent;
     private GameObject playerControl;
 
     public bool isMyTurn = false;
     public bool transistionToNextPlayer = false;
+
+    /// <summary>
+    /// 当前手牌牌型
+    /// </summary>
+    public CardsValue bestCardsValue { get; set; }
+    /// <summary>
+    /// 最好牌型的手牌
+    /// </summary>
+    public List<Card> bestCards { get; set; }
 
 #endregion
 
@@ -95,12 +102,14 @@ public class Player : MonoBehaviour
     /// </summary>
     public EventHandler<int> OnControl;
 
+    /// <summary>
+    /// 玩家获胜
+    /// </summary>
+    public EventHandler OnWin;
+
 #endregion
 
 #region API
-    private void Awake(){
-        CreatePlayerControl();
-    }
 
     /// <summary>
     /// 0-3代表下注、弃牌、过牌、全压
@@ -132,7 +141,6 @@ public class Player : MonoBehaviour
         }
         HidePlayerControl();
     }
-
     public void CountValue()
     {
         // 计算玩家手牌的牌型组合
@@ -157,8 +165,6 @@ public class Player : MonoBehaviour
                 OnChangeStat?.Invoke(this, Stat);
             }else{
                 //上家下过注，可以跟、加
-                Debug.Log(bet);
-                Debug.Log(upper_bet);
                 if(bet + Bet == Upper_bet){
                     //跟上家
                     DoBet(bet);
@@ -222,14 +228,27 @@ public class Player : MonoBehaviour
         // 玩家摸牌
         cards[0] = card1;
         cards[1] = card2;
-        OnUpdateCards?.Invoke(this, 1);
+        OnUpdateCards?.Invoke(this, 0);
+
+        if(IsOwner){
+            OnUpdateCards?.Invoke(this, 1);
+        }
     }
 
-    public void CreatePlayerControl(){
-        playerControl = Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerControlPath), playerControlParent);
-        //TODO: 将player（this）绑定到prefab的脚本中
-        playerControl.GetComponent<PlayerControl>().BindPlayer(this);
-    }
+    // public void CreatePlayerPrefabAndControl(){
+    //     // 创建玩家预制体并更改父物体
+    //     GameObject _playerParent = GameObject.Find("Players");
+    //     Debug.Log(_playerParent);
+    //     transform.SetParent(_playerParent.transform, false);
+
+
+    //     // 创建玩家控制面板并更改父物体
+    //     GameObject _playerControlParent = GameObject.Find("PlayerCanvas");
+    //     playerControlParent = _playerControlParent.transform;
+    //     playerControl = Instantiate(PlayerControlPrefab, playerControlParent, false);
+    //     //TODO: 将player（this）绑定到prefab的脚本中
+    //     playerControl.GetComponent<PlayerControl>().BindPlayer(this);
+    // }
 
     public void ShowPlayerControl(){
         if(Upper_bet != 0){
@@ -294,7 +313,7 @@ public class Player : MonoBehaviour
     /// 输入公共牌的List<Card>，返回CardsValue类，里面定义了类型、高牌、pair1、pair2，也重载了运算符
     /// </summary>
     /// <param name="publicCards"></param>
-    public CardsValue CountHandValue(List<Card> publicCards){
+    public CardsValue CountHandValue(List<Card> publicCards, out List<Card> bestCards){
         //cards保存7张牌，包括2张手牌和5张公共牌
         List<Card> sevenCards = new List<Card>();
         for(int i = 0; i < 2; i++){
@@ -312,25 +331,26 @@ public class Player : MonoBehaviour
         Card pair2;
 
         List<Card> fiveCards = new List<Card>();
+        bestCards = null;
 
         CardsValue maxCardsValue = new CardsValue(0,null,null,null);
 
         for(int i=0;i<6;i++){
-            for(int j=i;j<7;j++){
+            for(int j=i+1;j<7;j++){
                 fiveCards.Clear();
-
-                for(int k=0;k<7;j++){
+                for(int k=0;k<7;k++){
                     if(k == i || k == j){
                         continue;
                     }
-                    fiveCards.Add(cards[k]);
+                    fiveCards.Add(sevenCards[k]);
                 }
                 //取到五张牌后, 维护最大牌型
-                Debug.Log(fiveCards.Count);
                 type = CardCombinationHelper.GetCombinationType(fiveCards, out highCard, out pair1, out pair2);
                 CardsValue newCardsValue = new CardsValue(type, highCard, pair1, pair2);
+
                 if(newCardsValue > maxCardsValue){
                     maxCardsValue = newCardsValue;
+                    bestCards = fiveCards;
                 }
             }
         }
@@ -338,10 +358,24 @@ public class Player : MonoBehaviour
         return maxCardsValue;
     }
 
+    public void SetBestValuedCards(CardsValue bestCardsValue, List<Card> bestCards){
+        this.bestCardsValue = bestCardsValue;
+        this.bestCards = bestCards;
+    }
+
     public void WinMoney(float money){
         Money += money;
-        OnChangeTotalMoney?.Invoke(this, money);
+        OnChangeTotalMoney?.Invoke(this, Money);
+        OnWin?.Invoke(this, EventArgs.Empty);
     }
+
+    // private void Awake(){
+    //     CreatePlayerPrefabAndControl();
+    // }
+#endregion
+
+#region 网络同步
+    
 #endregion
 }
 

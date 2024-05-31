@@ -31,8 +31,20 @@ public class PlayerVisual : MonoBehaviour
         player.OnChangeStat += UpdateStat;
         player.OnUpdateCards += UpdateCardsSprite;
         player.OnControl += UpdateColor;
+        player.OnWin += UpdateWinnerColor;
     }
 
+    private void UpdateWinnerColor(object sender, EventArgs e)
+    {
+        //黄金色
+        infoPanel.color = new Color32(255, 255, 0, 130);
+    }
+
+    /// <summary>
+    /// 更新卡牌的Sprite
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e">0: 牌背、1：牌面、2：null</param>
     private void UpdateCardsSprite(object sender, uint e)
     {
         if(e == 1){
