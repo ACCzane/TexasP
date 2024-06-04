@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Unity.Netcode;
 
 public class GameControlFlow : MonoBehaviour
 {
-    [HideInInspector]public string playerPath = "/PlayerCanvas/Players";    //场景中Player的路径
+    [SerializeField]private Transform Players;    //场景中Player的路径
     [SerializeField]private Dealer dealer;
     [SerializeField]private PoolAmount pool;
     [SerializeField]private PublicCard publicCard;
@@ -26,7 +27,7 @@ public class GameControlFlow : MonoBehaviour
     /// 游戏开始时初始化玩家信息
     /// </summary>
     public void GameStart() {
-        GameObject playersParent = GameObject.Find(playerPath);
+        GameObject playersParent = Players.gameObject;
 
         players = new LinkList<Player>();
 
@@ -151,11 +152,23 @@ public class GameControlFlow : MonoBehaviour
         currentTerm++;
     }
 
+    [ClientRpc]
+    private void ShowPlayerControlClientRpc(ulong plyaerId){
+        if(NetworkManager.Singleton.LocalClientId == plyaerId){
+            foreach(Transform player in Players){
+                Player _player = player.GetComponent<Player>();  
+                if(_player.PlayerID.Value == plyaerId){
+                    _player.ShowPlayerControl();
+                }
+            }
+        }
+    }
+
     private IEnumerator PlayerDecisionLoop(){
         //玩家记录上家信息
         currentPlayer.Upper_bet = sharedInfo.CurrentActivePlayerNode.Prev.Item.Bet;
         //玩家决策
-        currentPlayer.ShowPlayerControl();
+        ShowPlayerControlClientRpc(currentPlayer.PlayerID.Value);
 
         //玩家做决策的时间, 如果currentPlayer.transistionToNextPlayer == false，则说明该交互窗口已经被关闭了
         while(currentPlayer.transistionToNextPlayer == false){

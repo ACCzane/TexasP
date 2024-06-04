@@ -576,6 +576,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8375065d7df592149ba427b73837ddf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Player: {fileID: 0}
 --- !u!61 &5531393015090188927
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -878,7 +879,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4815300559372877754}
         m_TargetAssemblyTypeName: PlayerControl, Assembly-CSharp
-        m_MethodName: Player_Fold
+        m_MethodName: Player_FoldServerRpc
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1036,6 +1037,7 @@ GameObject:
   - component: {fileID: 7080757847455533174}
   - component: {fileID: 8591735773135003070}
   - component: {fileID: 4815300559372877754}
+  - component: {fileID: -1460639479357871524}
   m_Layer: 5
   m_Name: PlayerControl
   m_TagString: Untagged
@@ -1145,6 +1147,26 @@ MonoBehaviour:
   playerBetAmount: {fileID: 5905251901170672771}
   playerAction_Bet: {fileID: 2978027213327085792}
   checkPanel: {fileID: 8570022996554408989}
+--- !u!114 &-1460639479357871524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7293527821658267017}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 951099334
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &8570022996554408989
 GameObject:
   m_ObjectHideFlags: 0
@@ -1268,7 +1290,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4815300559372877754}
         m_TargetAssemblyTypeName: PlayerControl, Assembly-CSharp
-        m_MethodName: Player_Check
+        m_MethodName: Player_CheckServerRpc
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

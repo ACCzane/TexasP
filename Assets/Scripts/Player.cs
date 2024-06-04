@@ -7,6 +7,9 @@ using Unity.Netcode;
 
 public class Player : NetworkBehaviour
 {
+
+    public NetworkVariable<ulong> PlayerID = new NetworkVariable<ulong>();
+
 #region 数据
     /// <summary>
     /// 玩家手牌
@@ -68,9 +71,7 @@ public class Player : NetworkBehaviour
 
 
     public GameObject PlayerPrefab;
-    public GameObject PlayerControlPrefab;
-    [SerializeField] private Transform playerControlParent;
-    private GameObject playerControl;
+    [SerializeField] private PlayerControl playerControl;
 
     public bool isMyTurn = false;
     public bool transistionToNextPlayer = false;
@@ -110,6 +111,10 @@ public class Player : NetworkBehaviour
 #endregion
 
 #region API
+
+    private void Start(){
+        playerControl.Hide();
+    }
 
     /// <summary>
     /// 0-3代表下注、弃牌、过牌、全压

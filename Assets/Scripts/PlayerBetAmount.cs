@@ -7,7 +7,7 @@ using System;
 
 public class PlayerBetAmount : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    public Player Player{get; set;}
+    public Player Player;
     private TMPro.TextMeshProUGUI textMesh;
     private float maxBetAmount;
     private float minBetAmount;

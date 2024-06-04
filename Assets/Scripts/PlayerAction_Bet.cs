@@ -13,6 +13,6 @@ public class PlayerAction_Bet : MonoBehaviour
     }
     public void OnBetButtonClick(PlayerControl playerControl){
         float betAmount = float.Parse(betText.text);
-        playerControl.Player_Bet(betAmount);
+        playerControl.Player_BetServerRpc(betAmount);
     }
 }

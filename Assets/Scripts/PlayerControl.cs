@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerControl : MonoBehaviour
+public class PlayerControl : NetworkBehaviour
 {
     /// <summary>
     /// 联机游戏中的本地玩家
@@ -15,14 +16,6 @@ public class PlayerControl : MonoBehaviour
     [SerializeField]private GameObject checkPanel;
     private void Start(){
         playerAction_Bet.BetButton.onClick.AddListener(() => playerAction_Bet.OnBetButtonClick(this));
-    }
-
-    public void BindPlayer(Player player){
-
-        Player = player;
-        playerBetAmount.Player = player;
-
-        gameObject.SetActive(false);
     }
 
     public void Show(){
@@ -42,16 +35,19 @@ public class PlayerControl : MonoBehaviour
     public void Hide(){
         gameObject.SetActive(false);
     }
-
-    public void Player_Check(){
+    
+    [ServerRpc]
+    public void Player_CheckServerRpc(){
         Player.Decide(2,0f);
     }
 
-    public void Player_Fold(){
+    [ServerRpc]
+    public void Player_FoldServerRpc(){
         Player.Decide(1,0f);
     }
 
-    public void Player_Bet(float bet){
+    [ServerRpc]
+    public void Player_BetServerRpc(float bet){
         Player.Decide(0, bet);
     }
 }
